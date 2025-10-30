@@ -55,21 +55,42 @@ struct {
 //
 // user write()s to the console go here.
 //
+//int
+// consolewrite(int user_src, uint64 src, int n)
+// {
+//   int i;
+
+
+//   for(i = 0; i < n; i++){
+//     char c;
+//     if(either_copyin(&c, user_src, src+i, 1) == -1)
+//       break;
+//     uartputc(c);
+//   }
+
+//   return i;
+// }
+
+// flag!
 int
 consolewrite(int user_src, uint64 src, int n)
 {
+  struct proc *p = myproc();
+
+  // 🔥 若此 process 被 trace，就完全不輸出使用者內容
+  if (p && p->traced)
+    return n;  // ✅ 回傳寫入長度 (模擬成功寫完)
+
   int i;
-
-
-  for(i = 0; i < n; i++){
-    char c;
-    if(either_copyin(&c, user_src, src+i, 1) == -1)
+  char c;
+  for (i = 0; i < n; i++) {
+    if (either_copyin(&c, user_src, src + i, 1) == -1)
       break;
     uartputc(c);
   }
-
   return i;
 }
+
 
 //
 // user read()s from the console go here.

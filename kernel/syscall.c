@@ -181,21 +181,55 @@ static char *syscall_names[] = {
 
 // flag!
 // 小工具：把 user 空字串安全搬到 kernel buffer
-static int
-ugetstr(uint64 uaddr, char *buf, int buflen)
-{
-  if (uaddr == 0) {
-    if (buflen > 0)
-      buf[0] = '\0';
-    return -1;
-  }
-  int n = fetchstr(uaddr, buf, buflen);
-  if (n < 0 && buflen > 0)
-    buf[0] = '\0';
-  return n;
-}
+//20/21
+// void
+// syscall(void)
+// {
+//   struct proc *p = myproc();
+//   int num = p->trapframe->a7;
 
-void syscall(void)
+//   if (num > 0 && num < NELEM(syscalls) && syscalls[num]) {
+//     uint64 a0 = argraw(0);
+//     uint64 a1 = argraw(1);
+//     (void)a1;
+
+//     p->trapframe->a0 = syscalls[num]();
+//     uint64 ret = p->trapframe->a0;
+
+//       if (p->traced && num != SYS_write && num != SYS_trace) {
+//     char *name = syscall_names[num] ? syscall_names[num] : "unknown";
+
+//     if (num == SYS_open || num == SYS_unlink ||
+//         num == SYS_chdir || num == SYS_mkdir || num == SYS_link) {
+//       char path[128];
+//       if (fetchstr(a0, path, sizeof(path)) < 0)
+//         printf("[pid %d] %s(<bad ptr>) = %ld\n", p->pid, name, ret);
+//       else
+//         printf("[pid %d] %s(\"%s\") = %ld\n", p->pid, name, path, ret);
+
+//     } else if (num == SYS_exec) {
+//       char path[128];
+//       uint64 argv0;
+//       uint64 a1 = argraw(1);
+//       if (fetchaddr(a1, &argv0) < 0 || fetchstr(argv0, path, sizeof(path)) < 0)
+//         printf("[pid %d] %s(<bad ptr>) = %ld\n", p->pid, name, ret);
+//       else
+//         printf("[pid %d] %s(\"%s\") = %ld\n", p->pid, name, path, ret);
+
+//     } else {
+//       printf("[pid %d] %s(%d) = %ld\n", p->pid, name, (int)a0, ret);
+//     }
+//   }
+
+
+//   } else {
+//     printf("%d %s: unknown sys call %d\n", p->pid, p->name, num);
+//     p->trapframe->a0 = -1;
+//   }
+// }
+
+void
+syscall(void)
 {
   struct proc *p = myproc();
   int num = p->trapframe->a7;
@@ -203,52 +237,48 @@ void syscall(void)
   if (num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     uint64 a0 = argraw(0);
     uint64 a1 = argraw(1);
-    uint64 a2 = argraw(2);
+    (void)a1;
 
     p->trapframe->a0 = syscalls[num]();
     uint64 ret = p->trapframe->a0;
 
-    // ✅ 避免 trace 本身 & write 造成無限輸出
-    if (p->traced && num != SYS_write && num != SYS_trace) {
-      char *name = 0;
-      if (num < NELEM(syscall_names))
-        name = syscall_names[num];
-      if (!name)
-        name = "unknown";
+    if (p->traced && num != SYS_trace) {
+      char *name = syscall_names[num] ? syscall_names[num] : "unknown";
 
-      // ==== 特殊處理 open/unlink/chdir/mkdir/link ====
       if (num == SYS_open || num == SYS_unlink ||
           num == SYS_chdir || num == SYS_mkdir || num == SYS_link) {
         char path[128];
-        if (ugetstr(a0, path, sizeof(path)) < 0) {
-          printf("[pid %d] %s(%p) = %ld\n",
-                 p->pid, name, (void *)a0, ret);
-        } else {
-          if (num == SYS_link)
-            printf("[pid %d] %s(\"%s\", <ignored>) = %ld\n",
-                   p->pid, name, path, ret);
-          else
-            printf("[pid %d] %s(\"%s\") = %ld\n",
-                   p->pid, name, path, ret);
+        if (fetchstr(a0, path, sizeof(path)) < 0)
+          printf("[pid %d] %s(<bad ptr>) = %ld\n", p->pid, name, ret);
+        else
+          printf("[pid %d] %s(\"%s\") = %ld\n", p->pid, name, path, ret);
+
+      } else if (num == SYS_exec) {
+        char path[128] = {0};
+        uint64 argv0 = 0;
+        uint64 a1 = argraw(1);
+
+        int bad = 0;
+        if (a1 == 0) {
+          bad = 1;
+        } else if (fetchaddr(a1, &argv0) < 0) {
+          bad = 1;
+        } else if (fetchstr(argv0, path, sizeof(path)) < 0) {
+          bad = 1;
         }
 
-      // ==== 特殊處理 exec(path, argv) ====
-      } else if (num == SYS_exec) {
-        char path[128];
-        int have = (ugetstr(a0, path, sizeof(path)) >= 0);
-        printf("[pid %d] %s(\"%s\") = %ld\n",
-               p->pid, name, have ? path : "(invalid)", ret);
+        if (bad)
+          printf("[pid %d] %s(<bad ptr>) = %ld\n", p->pid, name, ret);
+        else
+          printf("[pid %d] %s(\"%s\") = %ld\n", p->pid, name, path, ret);
 
-      // ==== 一般 syscall ====
       } else {
-        printf("[pid %d] %s(%d) = %ld\n",
-               p->pid, name, (int)a0, ret);
+        printf("[pid %d] %s(%d) = %ld\n", p->pid, name, (int)a0, ret);
       }
     }
 
   } else {
-    printf("%d %s: unknown sys call %d\n",
-           p->pid, p->name, num);
+    printf("%d %s: unknown sys call %d\n", p->pid, p->name, num);
     p->trapframe->a0 = -1;
   }
 }

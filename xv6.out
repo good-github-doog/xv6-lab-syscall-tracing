@@ -4,5 +4,14 @@ xv6 kernel is booting
 hart 1 starting
 hart 2 starting
 init: starting sh
-$ find . there_is_no_file
-$ qemu-system-riscv64: terminating on signal 15 from pid 9979 (make)
+$ strace mkdir 2Lzn4CVk
+[pid 4] exec("mkdir") = 2
+[pid 4] mkdir("2Lzn4CVk") = 0
+$ strace echo > 2Lzn4CVk/bYPKUDTk
+[pid 6] exec("echo") = 1
+$ strace mkdir 2Lzn4CVk/AqaWmdgH
+[pid 8] exec("mkdir") = 2
+[pid 8] mkdir("2Lzn4CVk/AqaWmdgH") = 0
+$ strace echo > 2Lzn4CVk/AqaWmdgH/bYPKUDTk
+[pid 10] exec("echo") = 1
+$ qemu-system-riscv64: terminating on signal 15 from pid 1995 (make)
