@@ -1,4 +1,7 @@
 // Saved registers for kernel context switches.
+#ifndef PROC_H
+#define PROC_H
+
 struct context {
   uint64 ra;
   uint64 sp;
@@ -106,3 +109,4 @@ struct proc {
   char name[16];               // Process name (debugging)
   int traced; // flag: whether this process is being syscall-traced
 };
+#endif // PROC_H
