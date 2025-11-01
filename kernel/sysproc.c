@@ -93,16 +93,17 @@ sys_uptime(void)
 }
 
 // flag!
+// find the process with the given pid and make it traced to let the kernel know
 uint64
 sys_trace(void) {
   int pid;
 
-  argint(0, &pid);
+  argint(0, &pid); // receive the pid
   
-  struct proc *p = find_proc_by_pid(pid);
+  struct proc *p = find_proc_by_pid(pid); // use the pid to find the process
   
   if (p != 0) {
-    p -> traced = 1;
+    p -> traced = 1; // make the traced flag of the process we found 1
     return 0;
   }
 

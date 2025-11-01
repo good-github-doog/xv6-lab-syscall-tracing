@@ -132,7 +132,7 @@ static uint64 (*syscalls[])(void) = {
 };
 
 // flag!
-// Map syscall numbers to names for tracing.
+// Map syscall numbers to names for tracing, it is convenient for us to print it out after tracing.
 static char *syscall_names[] = {
   [SYS_fork]   = "fork",
   [SYS_exit]   = "exit",
@@ -231,15 +231,15 @@ static char *syscall_names[] = {
 void
 syscall(void)
 {
-  struct proc *p = myproc();
-  int num = p->trapframe->a7;
+  struct proc *p = myproc(); // the process now
+  int num = p->trapframe->a7; // put the syscall id, which is definded in syscall.h
 
   if (num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    uint64 a0 = argraw(0);
-    uint64 a1 = argraw(1);
+    uint64 a0 = argraw(0); // 取得syscall的第一個參數
+    uint64 a1 = argraw(1); // 取得第二個參數
     (void)a1;
 
-    p->trapframe->a0 = syscalls[num]();
+    p->trapframe->a0 = syscalls[num](); // 執行對應的syscall
     uint64 ret = p->trapframe->a0;
 
     if (p->traced && num != SYS_trace) {

@@ -696,11 +696,13 @@ procdump(void)
 }
 
 // flag!
+// When we call traced(pid), kernel needs to know which process this pid is refered to.
+// find_proc_by_pid is for finding that process in the process tabel.
 struct proc*
 find_proc_by_pid(int pid) {
   struct proc *p;
 
-  for (p = proc; p < &proc[NPROC]; p++) {
+  for (p = proc; p < &proc[NPROC]; p++) { // scan through the the process tabel(proc[NPROC])
     acquire(&p -> lock);
     if (p -> pid == pid) {
       release(&p -> lock);

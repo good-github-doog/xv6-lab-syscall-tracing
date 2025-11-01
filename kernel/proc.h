@@ -107,6 +107,6 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  int traced; // flag: whether this process is being syscall-traced
+  int traced; // flag: this flag can check if this process has been traced
 };
 #endif // PROC_H
