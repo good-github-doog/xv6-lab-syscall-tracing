@@ -240,18 +240,18 @@ syscall(void)
     (void)a1;
 
     p->trapframe->a0 = syscalls[num](); // 執行對應的syscall
-    uint64 ret = p->trapframe->a0;
+    uint64 ret = p->trapframe->a0; // 把回傳值存下來
 
-    if (p->traced && num != SYS_trace) {
-      char *name = syscall_names[num] ? syscall_names[num] : "unknown";
+    if (p->traced && num != SYS_trace) { // 看看這個pocess有沒有被traced過，然後不要trace自己
+      char *name = syscall_names[num] ? syscall_names[num] : "unknown"; // 從上面的syscall_names[]找對應名稱，否則就印unknown
 
       if (num == SYS_open || num == SYS_unlink ||
-          num == SYS_chdir || num == SYS_mkdir || num == SYS_link) {
+          num == SYS_chdir || num == SYS_mkdir || num == SYS_link) { // 這些事檔案類型的syscall，他們的第一個參數是字串(檔案路徑)
         char path[128];
-        if (fetchstr(a0, path, sizeof(path)) < 0)
-          printf("[pid %d] %s(<bad ptr>) = %ld\n", p->pid, name, ret);
+        if (fetchstr(a0, path, sizeof(path)) < 0) // fetchstr(user-space 裡字串的記憶體位址, buffer, 長度)，目的是從userspace複製字串進kernel
+          printf("[pid %d] %s(<bad ptr>) = %ld\n", p->pid, name, ret); // 複製失敗，代表這個字串指標無效（例如 user 傳壞掉的指標）
         else
-          printf("[pid %d] %s(\"%s\") = %ld\n", p->pid, name, path, ret);
+          printf("[pid %d] %s(\"%s\") = %ld\n", p->pid, name, path, ret); // 印出 syscall 名稱 + 檔案路徑 + 回傳值
 
       } else if (num == SYS_exec) {
         char path[128] = {0};
