@@ -236,8 +236,6 @@ syscall(void)
 
   if (num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     uint64 a0 = argraw(0); // 取得syscall的第一個參數
-    uint64 a1 = argraw(1); // 取得第二個參數
-    (void)a1;
 
     p->trapframe->a0 = syscalls[num](); // 執行對應的syscall
     uint64 ret = p->trapframe->a0; // 把回傳值存下來
@@ -246,15 +244,15 @@ syscall(void)
       char *name = syscall_names[num] ? syscall_names[num] : "unknown"; // 從上面的syscall_names[]找對應名稱，否則就印unknown
 
       if (num == SYS_open || num == SYS_unlink ||
-          num == SYS_chdir || num == SYS_mkdir || num == SYS_link) { // 這些事檔案類型的syscall，他們的第一個參數是字串(檔案路徑)
+          num == SYS_chdir || num == SYS_mkdir || num == SYS_link) { // 這些是檔案類型的syscall，他們的第一個參數是字串(檔案路徑) ex: open("README", O_RDONLY)
         char path[128];
         if (fetchstr(a0, path, sizeof(path)) < 0) // fetchstr(user-space 裡字串的記憶體位址, buffer, 長度)，目的是從userspace複製字串進kernel
           printf("[pid %d] %s(<bad ptr>) = %ld\n", p->pid, name, ret); // 複製失敗，代表這個字串指標無效（例如 user 傳壞掉的指標）
         else
           printf("[pid %d] %s(\"%s\") = %ld\n", p->pid, name, path, ret); // 印出 syscall 名稱 + 檔案路徑 + 回傳值
 
-      } else if (num == SYS_exec) {
-        char path[128] = {0};
+      } else if (num == SYS_exec) { // exec(char *path, char **argv)，path 是要執行的程式，argv傳遞參數陣列
+        char path[128] = {0}; // exec("echo", ["echo", "hello"])，a0 = path = "echo", a1 = argv = pointer to ["echo", "hello"], argv[0] = "echo", argv[1] = "hello"
         uint64 argv0 = 0;
         uint64 a1 = argraw(1);
 
@@ -270,10 +268,11 @@ syscall(void)
         if (bad)
           printf("[pid %d] %s(<bad ptr>) = %ld\n", p->pid, name, ret);
         else
-          printf("[pid %d] %s(\"%s\") = %ld\n", p->pid, name, path, ret);
-
+          printf("[pid %d] %s(\"%s\") = %ld\n", p->pid, name, path, ret); 
+          // 對exec來說，真正的程式名稱不再a0，而是在argv[0]裡面
+          // 所以如果直接fetchstr(a0, ...)可能把指標位址當字串讀，然後就會出現亂碼
       } else {
-        printf("[pid %d] %s(%d) = %ld\n", p->pid, name, (int)a0, ret);
+        printf("[pid %d] %s(%d) = %ld\n", p->pid, name, (int)a0, ret); // don't need to fetchstr() ex: read(3, buf, 100)
       }
     }
 
@@ -282,6 +281,11 @@ syscall(void)
     p->trapframe->a0 = -1;
   }
 }
+
+//Q1:userspace的輸出和kernel space的trace都會consolewrite()，所以會有交錯。所以要改寫consolewrite()，讓被追蹤的process不要印出任何東西 
+//Q2:其他的都是抓第一個參數，而exec要取的是第二個參數(argv)，那才是程式名稱
+//Q3:如果不reset，那之後同一個slot的process就也會是traced = 1，這樣可能在沒被要求的情況下被印出來，也有可能因為我們改寫consolewrite導致印不出東西
+//Q4:不同的syscall的參數都不一樣，加上第一個通常比較關鍵，所以通常就印第一個
 
 
 

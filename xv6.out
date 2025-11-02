@@ -1,17 +1,17 @@
 
 xv6 kernel is booting
 
-hart 1 starting
 hart 2 starting
+hart 1 starting
 init: starting sh
-$ strace mkdir 5sKEOsSu
+$ strace mkdir dgHwluHM
 [pid 4] exec("mkdir") = 2
-[pid 4] mkdir("5sKEOsSu") = 0
-$ strace echo > 5sKEOsSu/hCMhYyu8
+[pid 4] mkdir("dgHwluHM") = 0
+$ strace echo > dgHwluHM/HKL6o1Uk
 [pid 6] exec("echo") = 1
-$ strace mkdir 5sKEOsSu/lVwDsWTp
+$ strace mkdir dgHwluHM/p6laT7BH
 [pid 8] exec("mkdir") = 2
-[pid 8] mkdir("5sKEOsSu/lVwDsWTp") = 0
-$ strace echo > 5sKEOsSu/lVwDsWTp/hCMhYyu8
+[pid 8] mkdir("dgHwluHM/p6laT7BH") = 0
+$ strace echo > dgHwluHM/p6laT7BH/HKL6o1Uk
 [pid 10] exec("echo") = 1
-$ qemu-system-riscv64: terminating on signal 15 from pid 5432 (make)
+$ qemu-system-riscv64: terminating on signal 15 from pid 70103 (make)

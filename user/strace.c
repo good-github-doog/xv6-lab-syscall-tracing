@@ -17,10 +17,10 @@ main(int argc, char *argv[])
   }
 
   if (pid == 0) {
-    exec(argv[1], argv + 1);
+    exec(argv[1], argv + 1); // 讓子行程去執行 command
     fprintf(2, "exec failed\n");
     exit(1);
-  } else {
+  } else { // 讓父行程去trace子行程
     trace(pid);
     wait(0);
   }

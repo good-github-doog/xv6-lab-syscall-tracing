@@ -77,9 +77,9 @@ consolewrite(int user_src, uint64 src, int n)
 {
   struct proc *p = myproc();
 
-  // 🔥 若此 process 被 trace，就完全不輸出使用者內容
+  // 若此 process 被 trace，代表現在是在進行strace，所以不需要印出來
   if (p && p->traced)
-    return n;  // ✅ 回傳寫入長度 (模擬成功寫完)
+    return n;  // 回傳寫入長度 (模擬成功寫完)
 
   int i;
   char c;

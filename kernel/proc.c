@@ -124,6 +124,7 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+  p->traced = 0; // reset traced flag when allocating proc
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -169,6 +170,7 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  p->traced = 0; // reset traced flag when freeproc
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -708,10 +710,8 @@ find_proc_by_pid(int pid) {
       release(&p -> lock);
       return p;
     }
-    release(&p -> lock);
+    release(&p ->lock);
   }
 
   return 0;
 }
-
-
